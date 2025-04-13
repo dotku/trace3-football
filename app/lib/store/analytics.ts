@@ -26,8 +26,8 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
     },
   },
   parking: {
-    available: -21234,
-    occupied: 33234,
+    available: 750,    // 5% of total capacity (15,000)
+    occupied: 14250,   // 95% of total capacity
   },
   setAttendance: (value) => set({ attendance: value }),
   updateConcessions: (sales, inventory) => set({ concessions: { sales, inventory } }),

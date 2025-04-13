@@ -1,4 +1,4 @@
-import { Card, Title, Text, Metric, Flex, Badge } from '@tremor/react';
+import { useMemo } from 'react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useAnalyticsStore } from '../../lib/store/analytics';
 import { useQuery } from '@tanstack/react-query';
@@ -66,52 +66,56 @@ export default function GameDayDashboard() {
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-8 relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-xl md:rounded-3xl">
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-violet-500/10 to-emerald-500/10 rounded-xl md:rounded-3xl backdrop-blur-xl"></div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 relative">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 relative">
         {/* Attendance Card */}
-        <Card className="ring-1 ring-indigo-500/20 border-none shadow-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl p-4">
-          <div className="flex justify-between items-start">
-            <Title className="text-blue-100">Attendance</Title>
-            <Badge color={attendanceStatus.color}>{attendanceStatus.text}</Badge>
+        <div className="p-4 rounded-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl">
+          <div className="flex justify-between items-center">
+            <h2 className="text-blue-100">Attendance</h2>
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-{attendanceStatus.color}-500/20 text-{attendanceStatus.color}-400">{attendanceStatus.text}</span>
           </div>
-          <Flex className="mt-4">
-            <Text className="text-blue-200">Current</Text>
-            <Metric className="text-blue-400">{formatNumber(attendance)}</Metric>
-          </Flex>
-          <div className="mt-4 md:mt-6 h-40 md:h-48">
+          <div className="mt-4">
+            <span className="text-sm font-medium text-blue-200">Current</span>
+            <span className="text-2xl font-semibold text-blue-400">{formatNumber(attendance)}</span>
+          </div>
+          <div className="mt-4 h-48 sm:h-52 lg:h-56 -mx-2 sm:-mx-4">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Present', value: attendance },
-                    { name: 'Expected', value: expectedAttendance },
+                    { name: 'Present', value: attendance, fill: '#60A5FA' },
+                    { name: 'Expected', value: expectedAttendance, fill: '#1E40AF' },
                   ]}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  fill="#3B82F6"
+                  innerRadius={45}
+                  outerRadius={65}
                   dataKey="value"
                   nameKey="name"
                 >
                   <Tooltip formatter={formatNumber} />
                 </Pie>
-                <Legend />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => <span className="text-blue-200">{value}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <Flex className="mt-4 text-sm text-slate-400 justify-center">
-            <Text>Target: {formatNumber(expectedAttendance)}</Text>
-          </Flex>
-        </Card>
+          <div className="mt-4 text-sm text-slate-400 text-center">
+            <span>Target: {formatNumber(expectedAttendance)}</span>
+          </div>
+        </div>
 
         {/* Concessions Card */}
-        <Card className="ring-1 ring-indigo-500/20 border-none shadow-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl p-4">
-          <Title className="text-blue-100">Concessions Revenue</Title>
-          <Flex className="mt-4">
-            <Text className="text-blue-200">Current Sales</Text>
-            <Metric className="text-purple-400">{formatCurrency(concessions.sales)}</Metric>
-          </Flex>
-          <div className="mt-4 md:mt-6 h-40 md:h-48">
+        <div className="p-4 rounded-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl">
+          <h2 className="text-blue-100">Concessions Revenue</h2>
+          <div className="mt-4">
+            <span className="text-sm font-medium text-blue-200">Current Sales</span>
+            <span className="text-purple-400">{formatCurrency(concessions.sales)}</span>
+          </div>
+          <div className="mt-4 h-48 sm:h-52 lg:h-56 -mx-2 sm:-mx-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
@@ -121,7 +125,7 @@ export default function GameDayDashboard() {
                     Forecast: predictions?.concessions?.data?.forecast || 0,
                   },
                 ]}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 30, left: 30, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
@@ -129,70 +133,103 @@ export default function GameDayDashboard() {
                 <Tooltip formatter={formatCurrency} />
                 <Legend />
                 <Bar dataKey="Current" fill="#9333EA" />
-                <Bar dataKey="Forecast" fill="#60A5FA" />
+                <Bar dataKey="Forecast" fill="#2563EB" />
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <Flex className="mt-4 text-sm text-slate-400 justify-between">
-            <Text>Items Sold: {Object.values(concessions.inventory).reduce((a, b) => a + b, 0)}</Text>
-            <Text>Average per Person: {formatCurrency(concessions.sales / attendance)}</Text>
-          </Flex>
-        </Card>
+          <div className="mt-4 text-sm text-slate-400 flex justify-between">
+            <span>Items Sold: {Object.values(concessions.inventory).reduce((a, b) => a + b, 0)}</span>
+            <span>Average per Person: {formatCurrency(concessions.sales / attendance)}</span>
+          </div>
+        </div>
 
         {/* Parking Card */}
-        <Card className="ring-1 ring-indigo-500/20 border-none shadow-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl p-4">
-          <Title className="text-blue-100">Parking Availability</Title>
-          <Flex className="mt-4">
-            <Text className="text-blue-200">Spaces Available</Text>
-            <Metric className="text-emerald-400">{formatNumber(parking.available)}</Metric>
-          </Flex>
-          <div className="mt-4 md:mt-6 h-40 md:h-48">
+        <div className="p-4 rounded-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl">
+          <h2 className="text-blue-100">Parking Availability</h2>
+          <div className="mt-4">
+            <div>
+              <span className="text-sm font-medium text-blue-200">Spaces Available</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-2xl font-semibold text-emerald-400">{formatNumber(parking.available)}</span>
+                <span className="text-sm text-slate-400">of {formatNumber(parking.available + parking.occupied)}</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-medium text-green-200">Occupied</span>
+              <div className="text-xl font-semibold text-green-600 mt-1">{formatNumber(parking.occupied)}</div>
+            </div>
+          </div>
+          <div className="mt-4 h-48 sm:h-52 lg:h-56 -mx-2 sm:-mx-4">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Available', value: parking.available },
-                    { name: 'Occupied', value: parking.occupied },
+                    { name: 'Available', value: parking.available, fill: '#4ADE80' },
+                    { name: 'Occupied', value: parking.occupied, fill: '#065F46' },
                   ]}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  fill="#22C55E"
+                  innerRadius={45}
+                  outerRadius={65}
                   dataKey="value"
                   nameKey="name"
+                  startAngle={90}
+                  endAngle={450}
                 >
-                  <Tooltip formatter={formatNumber} />
+                  <Tooltip
+                    formatter={(value) => formatNumber(value as number)}
+                    contentStyle={{ backgroundColor: '#1F2937', border: 'none' }}
+                    itemStyle={{ color: '#E5E7EB' }}
+                  />
                 </Pie>
-                <Legend />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => <span className="text-green-200">{value}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <Flex className="mt-4 text-sm text-slate-400 justify-between">
-            <Text>Total Capacity: {formatNumber(parking.available + parking.occupied)}</Text>
-            <Text>Utilization: {Math.round((parking.occupied / (parking.available + parking.occupied)) * 100)}%</Text>
-          </Flex>
-        </Card>
+          <div className="mt-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                <span className="text-sm text-green-200">Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-900"></div>
+                <span className="text-sm text-green-200">Occupied</span>
+              </div>
+            </div>
+            <div className="text-sm">
+              <span className="text-slate-400">Utilization: </span>
+              <span className={`font-medium ${parking.occupied / (parking.available + parking.occupied) > 0.85 ? 'text-amber-400' : 'text-green-400'}`}>
+                {Math.round((parking.occupied / (parking.available + parking.occupied)) * 100)}%
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Historical Trends */}
-      <Card className="ring-1 ring-indigo-500/20 border-none shadow-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl p-4">
+      <div className="p-4 rounded-lg bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl">
         <div className="flex flex-col md:flex-row justify-between items-start mb-4 md:mb-6 space-y-2 md:space-y-0">
           <div>
-            <Title className="text-blue-100">Historical Trends</Title>
-            <Text className="text-blue-300">30-day performance metrics</Text>
+            <h2 className="text-blue-100">Historical Trends</h2>
+            <span className="text-blue-300">30-day performance metrics</span>
           </div>
           <div className="flex flex-wrap gap-2 md:gap-4">
-            <Badge color="violet">Attendance</Badge>
-            <Badge color="emerald">Revenue</Badge>
-            <Badge color="amber">Parking</Badge>
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-violet-500/20 text-violet-400">Attendance</span>
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400">Good</span>
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-400">Parking</span>
           </div>
         </div>
-        <div className="mt-4 h-60 md:h-80 bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl rounded-lg p-4">
+        <div className="mt-4 h-56 sm:h-64 lg:h-80 bg-gradient-to-br from-slate-900/90 to-indigo-950/90 backdrop-blur-xl rounded-lg p-4 sm:p-6">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={historicalData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
             >
               <defs>
                 <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
@@ -219,7 +256,7 @@ export default function GameDayDashboard() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
